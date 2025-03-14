@@ -21,9 +21,9 @@ def log_environ(handler):
         return handler(environ, start_fn)
 
     return _inner
+ 
 
-
-def main():
+def get_app():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--schema", type=argparse.FileType("r"), help="Schema definitions"
@@ -47,8 +47,6 @@ def main():
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
-
-    from werkzeug.serving import run_simple
 
     backend = InMemoryBackend()
     app = SCIMProvider(backend)
@@ -81,6 +79,11 @@ def main():
     if args.reverse_proxy:
         app = ProxyFix(app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
+    return app, backend, args
+
+def run_server(app, backend, args):
+    """ run the server locally """
+    from werkzeug.serving import run_simple # pylint: disable=import-outside-toplevel
     run_simple(
         args.hostname,
         args.port,
@@ -95,4 +98,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # initialize the app, backend and args. make sure to run the server locally first
+    _app, _backend, _args = get_app()
+    run_server(app=_app, backend=_backend, args=_args)

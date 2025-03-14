@@ -19,5 +19,5 @@ class TestProvider:
             },
             scim_ctx=Context.RESOURCE_CREATION_REQUEST,
         )
-        ret = provider.backend.create_resource("User", user_model)
+        ret = provider.backend.create_resource("", "User", user_model)
         assert ret.id is not None

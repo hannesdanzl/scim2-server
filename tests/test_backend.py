@@ -87,7 +87,7 @@ class TestBackend:
         backend = provider.backend
         backend.resource_types["User"].name = "User RT Name"
         resource = backend.get_model("User")(user_name="bjensen")
-        created = backend.create_resource("User", resource)
+        created = backend.create_resource("", "User", resource)
         assert created.meta.resource_type == "User RT Name"
 
     def test_register_resource_type_unknown_schema(self):
@@ -110,4 +110,4 @@ class TestBackend:
     def test_update_unknown_resource(self):
         backend = InMemoryBackend()
         resource = User(id="123")
-        assert backend.update_resource("User", resource) is None
+        assert backend.update_resource("", "User", resource) is None

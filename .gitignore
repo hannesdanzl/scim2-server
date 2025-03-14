@@ -14,3 +14,5 @@ dist
 .vscode
 .idea
 .directory
+.venv*
+.aws-sam*

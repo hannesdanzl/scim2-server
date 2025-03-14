@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: An AWS Serverless Specification template describing your function.
+
+Globals:
+  Function:
+    Handler: cli.lambda_handler
+    MemorySize: 256
+    Timeout: 600
+    Runtime: python3.10
+    Environment:
+      Variables:
+        Log_Level: INFO
+
+Resources:
+  Scim2ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors: "'*'"
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              
+  Scim2ServiceHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: "./functions/Scim2ServiceHandler/"
+      Description: "ScimService"
+      Events:
+        ScimProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Scim2ApiGateway
+            Path: /{proxy+}  # Catches all paths under /scim/
+            Method: ANY           # Supports all HTTP methods
+            # AWSTemplateFormatVersion: 1.0

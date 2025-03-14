@@ -162,9 +162,10 @@ class SCIMProvider:
         if not resource_type:
             raise NotFound
 
+        tenant_id = self._get_tenant_id(request)
         match request.method:
             case "GET":
-                if resource := self.backend.get_resource(resource_type.id, resource_id):
+                if resource := self.backend.get_resource(tenant_id, resource_type.id, resource_id):
                     if self.continue_etag(request, resource):
                         response_args = self.get_attrs_from_request(request)
                         self.adjust_location(request, resource)
@@ -178,13 +179,13 @@ class SCIMProvider:
                         return self.make_response(None, status=304)
                 raise NotFound
             case "DELETE":
-                if self.backend.delete_resource(resource_type.id, resource_id):
+                if self.backend.delete_resource(tenant_id, resource_type.id, resource_id):
                     return self.make_response(None, 204)
                 else:
                     raise NotFound
             case "PUT":
                 response_args = self.get_attrs_from_request(request)
-                resource = self.backend.get_resource(resource_type.id, resource_id)
+                resource = self.backend.get_resource(tenant_id, resource_type.id, resource_id)
                 if resource is None:
                     raise NotFound
                 if not self.continue_etag(request, resource):
@@ -194,7 +195,7 @@ class SCIMProvider:
                     resource_type.id
                 ).model_validate(request.json)
                 merge_resources(resource, updated_attributes)
-                updated = self.backend.update_resource(resource_type.id, resource)
+                updated = self.backend.update_resource(tenant_id, resource_type.id, resource)
                 self.adjust_location(request, updated)
                 return self.make_response(
                     updated.model_dump(
@@ -215,14 +216,14 @@ class SCIMProvider:
 
                 patch_operation = PatchOp.model_validate(payload)
                 response_args = self.get_attrs_from_request(request)
-                resource = self.backend.get_resource(resource_type.id, resource_id)
+                resource = self.backend.get_resource(tenant_id, resource_type.id, resource_id)
                 if resource is None:
                     raise NotFound
                 if not self.continue_etag(request, resource):
                     raise PreconditionFailed
 
                 self.apply_patch_operation(resource, patch_operation)
-                updated = self.backend.update_resource(resource_type.id, resource)
+                updated = self.backend.update_resource(tenant_id, resource_type.id, resource)
 
                 if response_args:
                     self.adjust_location(request, updated)
@@ -290,13 +291,19 @@ class SCIMProvider:
             search_request.sort_order = SearchRequest.SortOrder.descending
         return search_request
 
+    def _get_tenant_id(self, request):
+        return ""
+
     def query_resource(self, request: Request, resource: ResourceType | None):
         search_request = self.build_search_request(request)
 
         kwargs = {}
         if resource is not None:
             kwargs["resource_type_id"] = resource.id
+
+        tenant_id = self._get_tenant_id(request)
         total_results, results = self.backend.query_resources(
+            tenant_id,
             search_request=search_request, **kwargs
         )
         for r in results:
@@ -327,6 +334,7 @@ class SCIMProvider:
         if not resource_type:
             raise NotFound
 
+        tenant_id = self._get_tenant_id(request)
         match request.method:
             case "GET":
                 return self.make_response(
@@ -340,6 +348,7 @@ class SCIMProvider:
                     payload, scim_ctx=Context.RESOURCE_CREATION_REQUEST
                 )
                 created_resource = self.backend.create_resource(
+                    tenant_id,
                     resource_type.id,
                     resource,
                 )
