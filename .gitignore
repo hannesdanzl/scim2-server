@@ -16,3 +16,4 @@ dist
 .directory
 .venv*
 .aws-sam*
+samconfig.toml
