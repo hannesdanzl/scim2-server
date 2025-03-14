@@ -1,5 +1,5 @@
 import datetime
-
+import pytest
 import httpx
 import time_machine
 from scim2_models import SearchRequest
@@ -595,3 +595,39 @@ class TestSCIMProvider:
         r = wsgi.get("/v2", follow_redirects=False)
         assert r.is_redirect
         assert r.headers["Location"] == "https://scim.example.com/v2/"
+
+    def test_multi_tenancy_creation(self, wsgi, fake_user_data):
+        user_data = fake_user_data[0]
+
+        r = wsgi.post("/v2/Users", json=user_data, headers={"Authorization": "Bearer !tenant1"})
+        assert r.status_code == 201
+
+        user_id1=r.json()["id"]
+
+        r = wsgi.get(f"/v2/Users/{user_id1}", headers={"Authorization": "Bearer !tenant1"})
+        assert r.status_code == 200
+
+        r = wsgi.get(f"/v2/Users/{user_id1}", headers={"Authorization": "Bearer !tenant2"})
+        assert r.status_code == 404
+
+        r = wsgi.post("/v2/Users", json=user_data, headers={"Authorization": "Bearer !tenant2"})
+        assert r.status_code == 201
+        user_id2=r.json()["id"]
+
+        r = wsgi.get(f"/v2/Users/{user_id2}", headers={"Authorization": "Bearer !tenant2"})
+        assert r.status_code == 200
+
+        r = wsgi.get(f"/v2/Users/{user_id2}", headers={"Authorization": "Bearer !tenant1"})
+        assert r.status_code == 404
+
+        r = wsgi.delete(f"/v2/Users/{user_id1}", headers={"Authorization": "Bearer !tenant1"})
+        assert r.status_code == 204
+
+        r = wsgi.get(f"/v2/Users/{user_id1}", headers={"Authorization": "Bearer !tenant1"})
+        assert r.status_code == 404
+
+        r = wsgi.delete(f"/v2/Users/{user_id2}", headers={"Authorization": "Bearer !tenant2"})
+        assert r.status_code == 204
+
+        r = wsgi.get(f"/v2/Users/{user_id2}", headers={"Authorization": "Bearer !tenant2"})
+        assert r.status_code == 404

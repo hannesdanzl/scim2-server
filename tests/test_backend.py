@@ -8,7 +8,7 @@ from scim2_models import SchemaExtension
 from scim2_models import Uniqueness
 from scim2_models import User
 
-from scim2_server.backend import InMemoryBackend
+from scim2_server.backend_inmem import InMemoryBackend
 
 
 class TestBackend:

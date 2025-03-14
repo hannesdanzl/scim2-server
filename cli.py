@@ -7,7 +7,7 @@ from scim2_models import ResourceType
 from scim2_models import Schema
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from scim2_server.backend import InMemoryBackend
+from scim2_server.backend_inmem import InMemoryBackend
 from scim2_server.provider import SCIMProvider
 from scim2_server.utils import load_default_resource_types
 from scim2_server.utils import load_default_schemas

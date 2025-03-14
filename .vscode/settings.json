@@ -2,7 +2,7 @@
   "python.envFile": "${workspaceFolder}/python.env",
   "python.analysis.extraPaths": ["${workspaceFolder}"],
   "python.terminal.activateEnvironment": true,
-  "python.testing.pytestArgs": ["./functions/Scim2ServiceHandler/tests"],
+  "python.testing.pytestArgs": ["./tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.analysis.importFormat": "absolute",

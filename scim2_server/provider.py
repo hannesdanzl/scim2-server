@@ -41,16 +41,19 @@ from scim2_server.backend import Backend
 from scim2_server.operators import patch_resource
 from scim2_server.utils import SCIMException
 from scim2_server.utils import merge_resources
-
+from scim2_server.tenant_provider import TenantProvider
 
 class SCIMProvider:
     """A WSGI application implementing a SCIM provider (server)."""
 
-    def __init__(self, backend: Backend):
+    def __init__(self, backend: Backend, tenant_provider: TenantProvider|None = None):
         self.bearer_tokens = set()
         self.backend = backend
         self.page_size = 50
         self.log = logging.getLogger("SCIMProvider")
+        self.tenant_provider = tenant_provider
+        if self.tenant_provider is None:
+            self.tenant_provider = TenantProvider()
 
         # Register the URL mapping. The endpoint refers to the name of the function to be called in this SCIMProvider ("call_" + endpoint).
         rules = itertools.chain.from_iterable(
@@ -162,7 +165,7 @@ class SCIMProvider:
         if not resource_type:
             raise NotFound
 
-        tenant_id = self._get_tenant_id(request)
+        tenant_id = self.tenant_provider.get_tenant_id(request)
         match request.method:
             case "GET":
                 if resource := self.backend.get_resource(tenant_id, resource_type.id, resource_id):
@@ -291,9 +294,6 @@ class SCIMProvider:
             search_request.sort_order = SearchRequest.SortOrder.descending
         return search_request
 
-    def _get_tenant_id(self, request):
-        return ""
-
     def query_resource(self, request: Request, resource: ResourceType | None):
         search_request = self.build_search_request(request)
 
@@ -301,7 +301,7 @@ class SCIMProvider:
         if resource is not None:
             kwargs["resource_type_id"] = resource.id
 
-        tenant_id = self._get_tenant_id(request)
+        tenant_id = self.tenant_provider.get_tenant_id(request)
         total_results, results = self.backend.query_resources(
             tenant_id,
             search_request=search_request, **kwargs
@@ -334,7 +334,7 @@ class SCIMProvider:
         if not resource_type:
             raise NotFound
 
-        tenant_id = self._get_tenant_id(request)
+        tenant_id = self.tenant_provider.get_tenant_id(request)
         match request.method:
             case "GET":
                 return self.make_response(
