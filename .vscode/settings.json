@@ -1,6 +1,6 @@
 {
   "python.envFile": "${workspaceFolder}/python.env",
-  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "python.analysis.extraPaths": ["${workspaceFolder}/src"],
   "python.terminal.activateEnvironment": true,
   "python.testing.pytestArgs": ["./tests"],
   "python.testing.unittestEnabled": false,
