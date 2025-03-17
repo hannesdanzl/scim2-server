@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: "AWS::Serverless-2016-10-31"
-Description: An AWS Serverless Specification template describing your function.
+Description: A SCIM2 service accessible through a public gateway
 
 Globals:
   Function:
@@ -31,13 +31,13 @@ Resources:
   Scim2ServiceHandler:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: "./functions/Scim2ServiceHandler/"
+      CodeUri: "./src/"
       Description: "ScimService"
+      Handler: lambda.lambda_handler
       Events:
         ScimProxy:
           Type: Api
           Properties:
             RestApiId: !Ref Scim2ApiGateway
-            Path: /{proxy+}  # Catches all paths under /scim/
-            Method: ANY           # Supports all HTTP methods
-            # AWSTemplateFormatVersion: 1.0
+            Path: /{proxy+}  # Catches all paths 
+            Method: ANY      # Supports all HTTP methods
